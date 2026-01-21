@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster Pro - Professional Task Management</title>
+    <meta name="description"
+        content="A professional task management application with smart reminders and notifications">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Background decorative elements -->
+    <div class="background-decoration">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="12" fill="url(#gradient1)" />
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <defs>
+                            <linearGradient id="gradient1" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#6366f1" />
+                                <stop offset="100%" stop-color="#8b5cf6" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">TaskMaster</h1>
+                    <p class="logo-subtitle">Professional Edition</p>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="all">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span>All Tasks</span>
+                    <span class="task-count" id="allCount">0</span>
+                </a>
+                <a href="#" class="nav-item" data-view="today">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <span>Today</span>
+                    <span class="task-count" id="todayCount">0</span>
+                </a>
+                <a href="#" class="nav-item" data-view="upcoming">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>Upcoming</span>
+                    <span class="task-count" id="upcomingCount">0</span>
+                </a>
+                <a href="#" class="nav-item" data-view="completed">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>Completed</span>
+                    <span class="task-count" id="completedCount">0</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                        <span>Productivity</span>
+                    </div>
+                    <div class="stats-value" id="productivityRate">0%</div>
+                    <div class="stats-label">Completion Rate</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <header class="content-header">
+                <div class="header-left">
+                    <h2 class="page-title" id="pageTitle">All Tasks</h2>
+                    <p class="page-subtitle" id="pageSubtitle">Manage your tasks efficiently</p>
+                </div>
+                <!-- Live Clock & Date -->
+                <div class="header-center">
+                    <span class="clock-label"
+                        style="font-size: 0.7rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Live
+                        System Clock</span>
+                    <div id="liveTime" class="live-clock">--:--:--</div>
+                    <div id="liveDate" class="live-date">...</div>
+                </div>
+                <div class="header-right">
+                    <button class="icon-btn" id="notificationBtn" title="Notifications">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <span class="notification-badge hidden" id="notificationBadge">0</span>
+                    </button>
+                    <button class="icon-btn" id="settingsBtn" title="Settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Notification Permission Banner -->
+            <div id="notificationPermission" class="notification-permission hidden">
+                <div class="permission-content">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <div class="permission-text">
+                        <h3>Enable Notifications</h3>
+                        <p>Get timely reminders for your important tasks</p>
+                    </div>
+                    <button onclick="requestNotificationPermission()" class="permission-btn">Enable Now</button>
+                </div>
+            </div>
+
+            <!-- Task Input Section -->
+            <section class="task-input-section">
+                <div class="input-card">
+                    <div class="input-header">
+                        <h3>Create New Task</h3>
+                        <button class="minimize-btn" id="minimizeInput">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="input-body">
+                        <div class="input-group">
+                            <label for="taskInput" class="input-label">Task Description</label>
+                            <input type="text" id="taskInput" class="task-input"
+                                placeholder="What needs to be accomplished?" onkeypress="handleKeyPress(event)">
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label for="taskDateTime" class="input-label">Reminder Date & Time</label>
+                                <div class="datetime-input-wrapper">
+                                    <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <input type="datetime-local" id="taskDateTime" class="datetime-input">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="taskPriority" class="input-label">Priority Level</label>
+                                <select id="taskPriority" class="priority-select">
+                                    <option value="low">Low Priority</option>
+                                    <option value="medium" selected>Medium Priority</option>
+                                    <option value="high">High Priority</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="addTask()" class="add-task-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            <span>Add Task</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Task List Section -->
+            <section class="task-list-section">
+                <div class="section-header">
+                    <h3 class="section-title">Your Tasks</h3>
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                    </div>
+                </div>
+
+                <!-- Task List Container -->
+                <ul id="taskList" class="task-list">
+                    <!-- Tasks will be dynamically added here -->
+                </ul>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1">
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                    <h3>No Tasks Yet</h3>
+                    <p>Create your first task to get started with TaskMaster Pro</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Link to JavaScript file -->
+    <script src="script.js"></script>
+</body>
+
+</html>
