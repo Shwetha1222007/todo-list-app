@@ -1,13 +1,16 @@
 import streamlit as st
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import time
 import pytz
+import json
+import os
 
 # 1. Page Configuration
 st.set_page_config(page_title="TaskMaster Pro - Autonomous Alarm", page_icon="⏰", layout="wide")
 
 # 2. IST Timezone Setup
 IST = pytz.timezone('Asia/Kolkata')
+TASKS_FILE = "tasks.json"
 
 # 3. Premium High-Gloss Design (CSS)
 st.markdown("""
@@ -68,23 +71,45 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Persistence (Session State)
-if "tasks" not in st.session_state: st.session_state.tasks = []
-if "audio_ready" not in st.session_state: st.session_state.audio_ready = False
+# 4. Persistence Functions
+def load_tasks():
+    if os.path.exists(TASKS_FILE):
+        try:
+            with open(TASKS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_tasks(tasks):
+    with open(TASKS_FILE, 'w') as f:
+        json.dump(tasks, f)
+
+# Initialize Session State
+if "tasks" not in st.session_state:
+    st.session_state.tasks = load_tasks()
+
+if "audio_ready" not in st.session_state:
+    st.session_state.audio_ready = False
 
 # 5. Background Alarm Engine (Autonomous Check)
 now_ist = datetime.now(IST)
 current_ts_ms = int(now_ist.timestamp() * 1000)
 active_alarms = []
+state_changed = False
 
-# This loop runs AUTOMATICALLY every time the page reloads (every 3 seconds)
+# Check Alarms
 for t in st.session_state.tasks:
     if t['status'] == 'pending' and current_ts_ms >= t['ts']:
         t['status'] = 'ringing'
+        state_changed = True
         st.toast(f"🔔 ALERT: {t['name']}", icon="⏰")
     
     if t['status'] == 'ringing':
         active_alarms.append(t['name'])
+
+if state_changed:
+    save_tasks(st.session_state.tasks)
 
 # Global Trigger UI
 if active_alarms:
@@ -95,7 +120,10 @@ if active_alarms:
 # 6. Sidebar: Mandatory System Warm-up
 with st.sidebar:
     st.title("🛡️ Core Settings")
+    
+    # Audio Activation Status
     if not st.session_state.audio_ready:
+        st.warning("⚠️ Audio System Inactive")
         if st.button("🔌 ACTIVATE ALARM SYSTEM", use_container_width=True, type="primary"):
             st.session_state.audio_ready = True
             st.markdown('<audio autoplay><source src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>', unsafe_allow_html=True)
@@ -106,12 +134,17 @@ with st.sidebar:
             if st.button("🔇 SILENCE ALL", use_container_width=True):
                 for t in st.session_state.tasks:
                     if t['status'] == 'ringing': t['status'] = 'completed'
+                save_tasks(st.session_state.tasks)
                 st.rerun()
 
     st.divider()
-    st.metric("Future Reminders", len([t for t in st.session_state.tasks if t['status'] == 'pending']))
-    if st.button("�️ Reset Everything"):
+    pending_count = len([t for t in st.session_state.tasks if t['status'] == 'pending'])
+    st.metric("Future Reminders", pending_count)
+    
+    if st.button("🗑️ Reset Everything"):
         st.session_state.tasks = []
+        st.session_state.audio_ready = False
+        save_tasks([])
         st.rerun()
 
 # 7. Hero: Live IST Sync Clock
@@ -160,14 +193,19 @@ with col_left:
             elif not t_label:
                 st.error("❌ Task description is required")
             else:
-                # REGISTERED: The background heartbeat will monitor this automatically
-                st.session_state.tasks.append({
+                new_task = {
                     "id": time.time(),
                     "name": t_label,
                     "ts": target_ts,
                     "time_str": target_dt.strftime("%I:%M %p"),
                     "status": "pending"
-                })
+                }
+                st.session_state.tasks.append(new_task)
+                save_tasks(st.session_state.tasks)
+                
+                # Auto-activate audio on interaction
+                st.session_state.audio_ready = True
+                
                 st.success(f"Registered for {target_dt.strftime('%I:%M %p')}")
                 st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
@@ -202,31 +240,38 @@ with col_right:
             st.balloons()
             if st.button(f"STOP & COMPLETE: {t['name']}", key=f"stop_{t['id']}", use_container_width=True):
                 t['status'] = 'completed'
+                save_tasks(st.session_state.tasks)
                 st.rerun()
         
         elif t['status'] == 'pending':
             if st.button("Cancel Task", key=f"del_{t['id']}"):
                 st.session_state.tasks = [tk for tk in st.session_state.tasks if tk['id'] != t['id']]
+                save_tasks(st.session_state.tasks)
                 st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 9. THE HEARTBEAT SCRIPT (Crucial Improvement)
-# This script reloads the page every 3 seconds to check the scheduler.
-# It intelligently waits if the user is currently typing.
-st.markdown("""
-<script>
-    (function autonomousScheduler() {
-        setTimeout(function() {
-            // Check if user is typing to avoid interrupting them
-            const isTyping = document.querySelector('input:focus, textarea:focus') !== null;
-            if (!isTyping) {
-                window.location.reload();
-            } else {
-                // If typing, defer another 2 seconds and check again
-                autonomousScheduler();
-            }
-        }, 3000);
-    })();
-</script>
-""", unsafe_allow_html=True)
+# 9. INTELLIGENT AUTONOMOUS LOOP
+# Instead of blindly reloading the page (which kills session & audio state),
+# we calculate exactly when the next alarm is due and wait for it server-side.
+# This prevents disruption while ensuring the alarm triggering is AUTOMATIC.
+
+pending_times = [t['ts'] for t in st.session_state.tasks if t['status'] == 'pending']
+
+if pending_times:
+    next_alarm_ts = min(pending_times)
+    now_ts = int(time.time() * 1000)
+    wait_ms = next_alarm_ts - now_ts
+    
+    # If alarm is within 1 hour, we enter a smart wait loop
+    if wait_ms > 0 and wait_ms < 3600000:
+        # We cap the wait to 5 seconds to stay responsive to potential drift 
+        # or just to keep the app "alive" without freezing for too long.
+        # 5 seconds is a good balance.
+        sleep_sec = min(wait_ms / 1000, 5)
+        if sleep_sec > 0.1:
+            time.sleep(sleep_sec)
+            st.rerun()
+    elif wait_ms <= 0:
+        # If we missed it or it's time, rerun immediately to trigger alarm logic
+        st.rerun()
